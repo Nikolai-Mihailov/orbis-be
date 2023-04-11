@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
+//  TO DO - ErrorHandler has to take status code also
 const ErrorHandler = (err: { message: string; stack: string }, req: Request, res: Response, next: NextFunction) => {
   console.log("<<< Middleware Error Hadnling >>>");
   const errStatus = 400;

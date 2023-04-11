@@ -3,9 +3,7 @@ import express, { Application } from "express";
 import helmet from "helmet";
 import config from "./config/config";
 import routes from "./routes";
-// import ErrorHandler from './helpers/ErrorHandler';
-
-// import { CreateUserController } from './controllers/users.controller';
+import ErrorHandler from "./helpers/ErrorHandler";
 
 export class App {
   private app: Application;
@@ -26,10 +24,9 @@ export class App {
 
   private applyingRoutes() {
     console.log("<<< Applying routes >>>");
-    //  To move this into router files
-    this.app.use("/api", routes);
 
-    // this.app.use(ErrorHandler);
+    this.app.use("/api", routes);
+    this.app.use(ErrorHandler);
 
     console.log("<<< Routes applied successfully >>>");
   }
