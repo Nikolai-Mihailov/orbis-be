@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model transactions {
+  id         Int               @id @default(autoincrement())
+  account_id Int
+  amount     Decimal           @default(0) @db.Decimal(10, 0)
+  type       transactions_type
+}
+
+model user_transaction_accounts {
+  id      Int @id @default(autoincrement())
+  user_id Int
+  balance Int @default(0)
+}
+
+model users {
+  id       Int    @id @default(autoincrement())
+  name     String @db.VarChar(100)
+  email    String @unique(map: "email_UNIQUE") @db.VarChar(100)
+  password String @db.VarChar(255)
+}
+
+enum transactions_type {
+  credit
+  debit
+}
