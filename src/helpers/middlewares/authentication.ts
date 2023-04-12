@@ -1,8 +1,15 @@
-import pkg, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
+import pkg, { JwtPayload } from "jsonwebtoken";
 import { TOKENS } from "../../config/config";
 
 const { verify } = pkg;
+
+interface TokenPayload {
+  userId: number;
+  name: string;
+  email: string;
+  exp: number;
+}
 
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   const authorization: string | undefined = req.headers["authorization"];
@@ -13,9 +20,12 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
     }
 
     const token: string = authorization.split(" ")[1];
-    const verifiedUser: string | JwtPayload | undefined = verify(token, TOKENS.ACCESS_TOKEN_SECRET!, { algorithms: ["HS256"] });
-    // TO DO -  extend Request and to add user in it not in req.body...
-    req.body.user = verifiedUser;
+    const verifiedToken: string | JwtPayload | undefined = verify(token, TOKENS.ACCESS_TOKEN_SECRET!);
+    const { userId, email, name } = verifiedToken as TokenPayload;
+
+    if (!req.currentUser) {
+      req.currentUser = { userId, email, name };
+    }
   } catch (error) {
     throw new Error("You are not authenticated");
   }

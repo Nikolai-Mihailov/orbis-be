@@ -1,10 +1,27 @@
-import { Faker, faker } from "@faker-js/faker";
+import bcrypt from "bcrypt";
+import prisma from "../src/helpers/prisma-clitnt";
+
+import { faker } from "@faker-js/faker";
 import { createUsersSeeds } from "./users";
 import { User } from "../src/helpers/interfaces/user.interface";
+import { SALT } from "../src/config/config";
 
-export interface UsersSeeds {
-  faker: Faker;
-  records: number;
-}
+(async () => {
+  try {
+    console.log("Seeding users");
+    const users: User[] = await createUsersSeeds(faker, 10, SALT!, bcrypt);
 
-const users: User[] = createUsersSeeds(faker, 10);
+    const savedUsers = await prisma.users.createMany({
+      data: users,
+    });
+
+    console.log(`${savedUsers.count} users were created`);
+
+    await prisma.$disconnect();
+    process.exit(1);
+  } catch (error) {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+})();

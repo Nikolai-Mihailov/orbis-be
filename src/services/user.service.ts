@@ -46,7 +46,11 @@ export const loginUserService = async ({ name, email, password }: User) => {
       return false;
     }
 
-    return user;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
   } catch (error) {
     return error;
   }

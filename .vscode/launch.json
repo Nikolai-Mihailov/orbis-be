@@ -13,6 +13,16 @@
       "console": "integratedTerminal",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
       "outFiles": ["${workspaceFolder}/**/*.js"]
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Seeds",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}\\seeds\\index.ts",
+      "console": "integratedTerminal",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "outFiles": ["${workspaceFolder}/**/*.js"]
     }
   ]
 }
