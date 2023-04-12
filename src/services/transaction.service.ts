@@ -1,6 +1,6 @@
 import prisma from "../helpers/prisma-clitnt";
 
-import { CreateTransaction, DeleteTransactionParameters } from "../helpers/interfaces/transaction.interface";
+import { CreateTransaction, DeleteTransactionParameters, GetAllTransactions } from "../helpers/interfaces/transaction.interface";
 
 export const createTransactionService = async ({ account_id, type, amount }: CreateTransaction) => {
   try {
@@ -24,7 +24,20 @@ export const deleteTransactionService = async ({ transactionId, userId }: Delete
     return await prisma.transactions.delete({
       where: {
         id: transactionId,
+        // account_id: userId <---  user shuld be able to delete only his transactions
       },
+    });
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getAllTransactionsService = async ({ currentPage, itemsPerPage, sort }: GetAllTransactions) => {
+  try {
+    const offset: number = (currentPage - 1) * itemsPerPage;
+    return await prisma.transactions.findMany({
+      skip: offset,
+      take: itemsPerPage,
     });
   } catch (error) {
     return error;

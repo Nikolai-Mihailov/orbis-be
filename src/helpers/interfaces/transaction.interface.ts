@@ -3,6 +3,11 @@ export enum TransactionType {
   Debit = "debit",
 }
 
+export enum SortOrder {
+  ASC = "asc",
+  DESC = "desc",
+}
+
 export interface Transactions {
   id?: number;
   account_id?: number;
@@ -23,4 +28,10 @@ export interface DeleteTransaction {
 export interface DeleteTransactionParameters {
   transactionId: number;
   userId: number;
+}
+
+export interface GetAllTransactions {
+  currentPage: number;
+  itemsPerPage: number;
+  sort: SortOrder;
 }

@@ -1,11 +1,22 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
 import validate from "../helpers/validation/joi-helper";
-import { Transactions, DeleteTransaction } from "../helpers/interfaces/transaction.interface";
-import { transactionValidationSchema } from "../helpers/validation/transaction";
+import { Transactions } from "../helpers/interfaces/transaction.interface";
+import { transactionValidationSchema, deleteTransactionValidationSchema, getAllTransactionsValidationSchema } from "../helpers/validation/transaction";
 import { createTransactionService, deleteTransactionService } from "../services/transaction.service";
 
-export const GetTrannsactionsController: RequestHandler = async (req: Request, res: Response) => {
-  res.status(200).send({
+export const GetAllTrannsactionsController: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+  //  TO DO - to add types on req.query
+  const { currentPage, itemsPerPage, SortOrder } = req.query;
+  const validateSchema: Error | undefined = await validate(getAllTransactionsValidationSchema, { currentPage, itemsPerPage, SortOrder });
+
+  try {
+    if (validateSchema instanceof Error) throw new Error(validateSchema.message);
+    
+  } catch (error) {
+    next(error);
+  }
+
+  return res.status(200).send({
     message: "GetTrannsactionsController",
   });
 };
@@ -18,36 +29,38 @@ export const CreateTransactionController: RequestHandler = async (req: Request, 
   try {
     if (validateSchema instanceof Error) throw new Error(validateSchema.message);
 
-    const result = await createTransactionService({ account_id: accountId, amount, type });
+    const result = (await createTransactionService({ account_id: accountId, amount, type })) as Error | Transactions;
 
-    if (!result) {
-      res.status(401).json({
+    if (result instanceof Error) {
+      return res.status(401).json({
         message: "Create transaction failed.",
       });
     }
 
-    res.status(200).json("Your transaction was saved successfuly");
+    return res.status(200).json("Your transaction was saved successfuly");
   } catch (error) {
     next(error);
   }
 };
 
-export const SortTransactionsController: RequestHandler = async (req: Request, res: Response) => {
-  res.status(200).send({
-    message: "SortTransactionsController",
-  });
-};
-
-export const DeleteTransactionController: RequestHandler = async (req: Request, res: Response) => {
+export const DeleteTransactionController: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const transactionId: number = +req.params?.transactionId;
   const userId: number = +req.currentUser.userId;
-  const result = await deleteTransactionService({ transactionId, userId });
+  const validateSchema: Error | undefined = await validate(deleteTransactionValidationSchema, { transactionId });
 
-  if (!result) {
-    res.status(401).json({
-      message: "Delete transaction failed",
-    });
+  try {
+    if (validateSchema instanceof Error) throw new Error(validateSchema.message);
+    const result = (await deleteTransactionService({ transactionId, userId })) as Error | Transactions;
+
+    if (result instanceof Error) {
+      return res.status(401).json({
+        message: "Delete transaction failed",
+      });
+    }
+    return res.status(200).json("The transaction was deleted");
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json("The transaction was deleted");
 };
+//  TO DO
+export const UpdateTransactionController: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {};
