@@ -1,24 +1,32 @@
 import { Request, Response, RequestHandler, NextFunction } from "express";
 import validate from "../helpers/validation/joi-helper";
-import { Transactions } from "../helpers/interfaces/transaction.interface";
+import { Transactions, GetAllTransactionsQuery, TransactionsResult } from "../helpers/interfaces/transaction.interface";
 import { transactionValidationSchema, deleteTransactionValidationSchema, getAllTransactionsValidationSchema } from "../helpers/validation/transaction";
-import { createTransactionService, deleteTransactionService } from "../services/transaction.service";
+import { createTransactionService, deleteTransactionService, getAllTransactionsService } from "../services/transaction.service";
 
 export const GetAllTrannsactionsController: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-  //  TO DO - to add types on req.query
-  const { currentPage, itemsPerPage, SortOrder } = req.query;
-  const validateSchema: Error | undefined = await validate(getAllTransactionsValidationSchema, { currentPage, itemsPerPage, SortOrder });
+  const queryParams = req.query as unknown as GetAllTransactionsQuery;
+  const currentPage: number = +queryParams.currentPage;
+  const itemsPerPage: number = +queryParams.itemsPerPage;
+  const validateSchema: Error | undefined = await validate(getAllTransactionsValidationSchema, { currentPage, itemsPerPage, sortOrder: queryParams.sortOrder });
 
   try {
     if (validateSchema instanceof Error) throw new Error(validateSchema.message);
-    
+
+    const result = (await getAllTransactionsService({ currentPage, itemsPerPage, sortOrder: queryParams.sortOrder })) as TransactionsResult | Error;
+
+    if (result instanceof Error) {
+      return res.status(401).send({
+        message: "Fetch all transactions failed",
+      });
+    }
+    return res.status(200).send({
+      result,
+      message: "success",
+    });
   } catch (error) {
     next(error);
   }
-
-  return res.status(200).send({
-    message: "GetTrannsactionsController",
-  });
 };
 
 export const CreateTransactionController: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {

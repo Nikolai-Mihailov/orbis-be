@@ -11,7 +11,10 @@ const type = Joi.string()
 const transactionId = Joi.number().positive().message("transactionId is missing or it's not a positive number").required();
 const currentPage = Joi.number().positive().message("currentPage is missing or it's not positive number").required();
 const itemsPerPage = Joi.number().positive().message("itemsPerPage is missing or it's not positive number").required();
-const sortOrder = Joi.string().valid(SortOrder.ASC, SortOrder.DESC).messages({ "any.only": "itemsPerPage is missing or it's not positive number" }).required();
+const sortOrder = Joi.string()
+  .valid(SortOrder.Ascending, SortOrder.Descending)
+  .messages({ "any.only": "Sorf is missing or it's not positive number" })
+  .required();
 
 export const transactionValidationSchema = Joi.object({
   amount,

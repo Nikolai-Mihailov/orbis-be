@@ -32,13 +32,21 @@ export const deleteTransactionService = async ({ transactionId, userId }: Delete
   }
 };
 
-export const getAllTransactionsService = async ({ currentPage, itemsPerPage, sort }: GetAllTransactions) => {
+export const getAllTransactionsService = async ({ currentPage, itemsPerPage, sortOrder }: GetAllTransactions) => {
   try {
     const offset: number = (currentPage - 1) * itemsPerPage;
-    return await prisma.transactions.findMany({
-      skip: offset,
-      take: itemsPerPage,
-    });
+    const query = await prisma.$queryRaw`SELECT 
+      u.name, t.type, t.amount
+      FROM
+        db.users u
+      LEFT JOIN
+        user_transaction_accounts ut ON u.id = ut.user_id
+      LEFT JOIN
+        transactions t ON t.account_id = ut.user_id
+       WHERE
+        t.amount IS NOT NULL
+        LIMIT ${itemsPerPage} OFFSET ${offset}`;
+    return query;
   } catch (error) {
     return error;
   }

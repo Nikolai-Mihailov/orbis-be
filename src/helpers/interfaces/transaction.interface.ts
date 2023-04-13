@@ -4,8 +4,8 @@ export enum TransactionType {
 }
 
 export enum SortOrder {
-  ASC = "asc",
-  DESC = "desc",
+  Ascending = "asc",
+  Descending = "desc",
 }
 
 export interface Transactions {
@@ -33,5 +33,17 @@ export interface DeleteTransactionParameters {
 export interface GetAllTransactions {
   currentPage: number;
   itemsPerPage: number;
-  sort: SortOrder;
+  sortOrder: SortOrder;
+}
+
+export interface TransactionsResult {
+  name: string;
+  type: TransactionType;
+  amount: number;
+}
+
+export interface GetAllTransactionsQuery {
+  currentPage: string;
+  itemsPerPage: string;
+  sortOrder: SortOrder;
 }

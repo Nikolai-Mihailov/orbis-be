@@ -15,16 +15,20 @@ model transactions {
 }
 
 model user_transaction_accounts {
-  id      Int @id @default(autoincrement())
+  id      Int   @id @default(autoincrement())
   user_id Int
-  balance Int @default(0)
+  balance Int   @default(0)
+  user    users @relation(fields: [user_id], references: [id])
+
+  @@index([user_id], map: "user_transaction_accounts_user_id_fkey")
 }
 
 model users {
-  id       Int    @id @default(autoincrement())
-  name     String @db.VarChar(100)
-  email    String @unique(map: "email_UNIQUE") @db.VarChar(100)
-  password String @db.VarChar(255)
+  id                        Int                         @id @default(autoincrement())
+  name                      String                      @db.VarChar(100)
+  email                     String                      @unique(map: "email_UNIQUE") @db.VarChar(100)
+  password                  String                      @db.VarChar(255)
+  user_transaction_accounts user_transaction_accounts[]
 }
 
 enum transactions_type {
