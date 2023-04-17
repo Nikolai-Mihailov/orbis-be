@@ -1,15 +1,43 @@
 import prisma from "../helpers/prisma-clitnt";
 
-import { CreateTransaction, DeleteTransactionParameters, GetAllTransactions } from "../helpers/interfaces/transaction.interface";
+import {
+  CreateTransaction,
+  DeleteTransactionParameters,
+  GetAllTransactions,
+  TransactionType,
+  UserTransactionAccounts,
+  UpdateTransactionParameters,
+  TransactionsUuserTransactionAccounts,
+} from "../helpers/interfaces/transaction.interface";
 
-export const createTransactionService = async ({ account_id, type, amount }: CreateTransaction) => {
+export const createTransactionService = async ({ userId, type, amount }: CreateTransaction) => {
   try {
+    const transaction = type === TransactionType.Debit ? "increment" : "decrement";
+    const account: UserTransactionAccounts = await prisma.user_transaction_accounts.upsert({
+      where: { user_id: userId },
+      create: {
+        user_id: userId,
+        balance: amount,
+      },
+      update: {
+        balance: {
+          [transaction]: amount,
+        },
+      },
+    });
+
     return await prisma.transactions.create({
       data: {
-        account_id,
+        account_id: account.id,
         type,
-        amount,
+
+        transactions_user_transaction_accounts: {
+          create: {
+            account_id: account.id,
+          },
+        },
       },
+      include: { transactions_user_transaction_accounts: true },
     });
   } catch (error) {
     return error;
@@ -18,13 +46,70 @@ export const createTransactionService = async ({ account_id, type, amount }: Cre
 
 export const deleteTransactionService = async ({ transactionId, userId }: DeleteTransactionParameters) => {
   try {
-    // For some reason prisma.transactions.delete dosn't detect any other parameters besides id... TO FIX
-    // TO DO - to add table relations
-
-    return await prisma.transactions.delete({
+    const account: TransactionsUuserTransactionAccounts | null = await prisma.transactions_user_transaction_accounts.findFirst({
       where: {
-        id: transactionId,
-        // account_id: userId <---  user shuld be able to delete only his transactions
+        transaction_id: transactionId,
+        user_transaction_accounts: {
+          user_id: userId,
+        },
+      },
+    });
+
+    if (account?.id) {
+      const transaction = await prisma.transactions.findFirst({
+        where: {
+          account_id: account.account_id,
+        },
+      });
+      const transactionType = transaction?.type === TransactionType.Debit ? "increment" : "decrement";
+
+      await prisma.$transaction([
+        prisma.transactions_user_transaction_accounts.deleteMany({
+          where: { transaction_id: transactionId, account_id: account.account_id },
+        }),
+        prisma.transactions.deleteMany({
+          where: { id: transactionId, account_id: account.account_id },
+        }),
+      ]);
+
+      return await prisma.user_transaction_accounts.update({
+        data: {
+          balance: {
+            [transactionType]: transaction?.amount,
+          },
+        },
+        where: {
+          user_id: userId,
+        },
+      });
+    }
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getAllTransactionsService = async ({ currentPage, itemsPerPage, sortOrder, userId }: GetAllTransactions) => {
+  try {
+    const offset: number = (currentPage - 1) * itemsPerPage;
+
+    return await prisma.transactions_user_transaction_accounts.findMany({
+      where: {
+        user_transaction_accounts: {
+          user_id: userId,
+          users: {
+            id: userId,
+          },
+        },
+      },
+      include: { transactions: true, user_transaction_accounts: true },
+      skip: offset,
+      take: itemsPerPage,
+      orderBy: {
+        user_transaction_accounts: {
+          users: {
+            name: sortOrder,
+          },
+        },
       },
     });
   } catch (error) {
@@ -32,21 +117,32 @@ export const deleteTransactionService = async ({ transactionId, userId }: Delete
   }
 };
 
-export const getAllTransactionsService = async ({ currentPage, itemsPerPage, sortOrder }: GetAllTransactions) => {
+export const updateTransactionService = async ({ transactionId, userId, amount, type }: UpdateTransactionParameters) => {
   try {
-    const offset: number = (currentPage - 1) * itemsPerPage;
-    const query = await prisma.$queryRaw`SELECT 
-      u.name, t.type, t.amount
-      FROM
-        db.users u
-      LEFT JOIN
-        user_transaction_accounts ut ON u.id = ut.user_id
-      LEFT JOIN
-        transactions t ON t.account_id = ut.user_id
-       WHERE
-        t.amount IS NOT NULL
-        LIMIT ${itemsPerPage} OFFSET ${offset}`;
-    return query;
+    const transactionType = type === TransactionType.Debit ? "increment" : "decrement";
+    const transaction = await prisma.transactions.update({
+      data: {
+        amount,
+        type,
+      },
+      where: { id: transactionId },
+    });
+
+    const account: UserTransactionAccounts | null = await prisma.user_transaction_accounts.update({
+      data: {
+        balance: {
+          [transactionType]: amount,
+        },
+      },
+      where: {
+        user_id: userId,
+      },
+    });
+
+    return {
+      ...transaction,
+      ...account,
+    };
   } catch (error) {
     return error;
   }

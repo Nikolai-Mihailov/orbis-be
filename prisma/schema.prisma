@@ -8,27 +8,42 @@ datasource db {
 }
 
 model transactions {
-  id         Int               @id @default(autoincrement())
-  account_id Int
-  amount     Decimal           @default(0) @db.Decimal(10, 0)
-  type       transactions_type
+  id                                     Int                                      @id @default(autoincrement())
+  account_id                             Int
+  amount                                 Decimal                                  @default(0) @db.Decimal(10, 0)
+  type                                   transactions_type
+  transactions_user_transaction_accounts transactions_user_transaction_accounts[]
+
+  @@index([account_id], map: "transaction_id_idx")
 }
 
 model user_transaction_accounts {
-  id      Int   @id @default(autoincrement())
-  user_id Int
-  balance Int   @default(0)
-  user    users @relation(fields: [user_id], references: [id])
+  id                                     Int                                      @id @default(autoincrement())
+  user_id                                Int                                      @unique(map: "user_id_UNIQUE")
+  balance                                Int                                      @default(0)
+  transactions_user_transaction_accounts transactions_user_transaction_accounts[]
+  users                                  users                                    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "user_id")
 
-  @@index([user_id], map: "user_transaction_accounts_user_id_fkey")
+  @@index([user_id], map: "user_id_idx")
 }
 
 model users {
-  id                        Int                         @id @default(autoincrement())
-  name                      String                      @db.VarChar(100)
-  email                     String                      @unique(map: "email_UNIQUE") @db.VarChar(100)
-  password                  String                      @db.VarChar(255)
-  user_transaction_accounts user_transaction_accounts[]
+  id                        Int                        @id @default(autoincrement())
+  name                      String                     @db.VarChar(100)
+  email                     String                     @unique(map: "email_UNIQUE") @db.VarChar(100)
+  password                  String                     @db.VarChar(255)
+  user_transaction_accounts user_transaction_accounts?
+}
+
+model transactions_user_transaction_accounts {
+  id                        Int                       @id @default(autoincrement())
+  account_id                Int
+  transaction_id            Int
+  transactions              transactions              @relation(fields: [transaction_id], references: [id], onDelete: Cascade, map: "transaction_id")
+  user_transaction_accounts user_transaction_accounts @relation(fields: [account_id], references: [id], map: "transactions_user_transaction_accounts_user_transaction_acc_fkey")
+
+  @@index([account_id, id], map: "account_id_idx")
+  @@index([transaction_id], map: "transaction_id_idx")
 }
 
 enum transactions_type {

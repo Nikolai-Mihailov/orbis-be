@@ -25,6 +25,12 @@ export const deleteTransactionValidationSchema = Joi.object({
   transactionId,
 });
 
+export const updateTransactionValidationSchema = Joi.object({
+  transactionId,
+  amount,
+  type,
+});
+
 export const getAllTransactionsValidationSchema = Joi.object({
   currentPage,
   itemsPerPage,

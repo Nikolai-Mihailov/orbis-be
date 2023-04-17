@@ -137,6 +137,27 @@
 				"header": []
 			},
 			"response": []
+		},
+		{
+			"name": "Update transaction",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7878/api/transaction/update-transaction",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7878",
+					"path": [
+						"api",
+						"transaction",
+						"update-transaction"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
